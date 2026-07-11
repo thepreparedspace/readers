@@ -520,7 +520,7 @@ function playSound(id, pulseEl){
     setTimeout(() => pulseEl.classList.remove('playing'), 220);
   }
   if(!audioCache[id]){
-    audioCache[id] = new Audio(`../sounds/${id}.mp3`);
+    audioCache[id] = new Audio(`sounds/${id}.mp3`);
   }
   const a = audioCache[id];
   a.currentTime = 0;
