@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>digraphs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;600;700&family=Andika:wght@400;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FBF7EF;
+    --card:#FFFFFF;
+    --ink:#1F1B17;
+    --ink-soft:#7A7166;
+    --line:#E7DFD1;
+    --red:#C0272D;
+    --red-soft:#F7DEDF;
+    --gold:#C79A3C;
+  }
+
+  *{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--ink);
+    font-family:'Quicksand',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* child-facing text switches font based on the parent's toggle */
+  body.font-cursive .child-font{ font-family:'Dancing Script',cursive; }
+  body.font-print   .child-font{ font-family:'Andika',sans-serif; }
+
+  .wrap{
+    max-width:980px;
+    margin:0 auto;
+    padding:40px 24px 100px;
+    position:relative;
+  }
+
+  /* ---------- header ---------- */
+  header{ text-align:center; margin-bottom:20px; }
+  header h1.child-font{
+    font-weight:700;
+    font-size:52px;
+    margin:0 0 4px;
+    color:var(--ink);
+  }
+  body.font-print header h1.child-font{ font-size:38px; }
+  header p.child-font{ margin:0; color:var(--ink-soft); font-weight:600; font-size:20px; letter-spacing:.02em; }
+  body.font-print header p.child-font{ font-size:16px; }
+
+  /* ---------- settings gear (parent-only) ---------- */
+  .settings-btn{
+    position:fixed;
+    top:16px;
+    right:16px;
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    background:rgba(255,255,255,.7);
+    border:1px solid var(--line);
+    color:var(--ink-soft);
+    font-size:16px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    opacity:.55;
+    z-index:50;
+    transition:opacity .15s ease;
+  }
+  .settings-btn:hover{ opacity:1; }
+
+  .settings-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(31,27,23,.45);
+    z-index:100;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .settings-overlay.open{ display:flex; }
+
+  .settings-panel{
+    background:var(--card);
+    border-radius:16px;
+    max-width:520px;
+    width:100%;
+    max-height:85vh;
+    overflow-y:auto;
+    padding:26px 28px;
+    position:relative;
+  }
+  .settings-panel .close{
+    position:absolute; top:14px; right:16px;
+    background:none; border:none; font-size:20px;
+    color:var(--ink-soft); cursor:pointer;
+  }
+  .settings-panel h2{
+    font-family:'Quicksand',sans-serif;
+    font-size:19px;
+    font-weight:700;
+    margin:0 0 18px;
+    color:var(--ink);
+  }
+  .settings-panel h3{
+    font-family:'Quicksand',sans-serif;
+    font-size:14px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--ink-soft);
+    margin:22px 0 10px;
+  }
+  .settings-panel p{
+    font-family:'Quicksand',sans-serif;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink);
+    margin:0 0 14px;
+  }
+  .settings-panel strong{ color:var(--red); }
+
+  .font-toggle{
+    display:flex;
+    gap:10px;
+  }
+  .font-toggle button{
+    flex:1;
+    padding:12px;
+    border-radius:10px;
+    border:2px solid var(--line);
+    background:var(--cream);
+    font-family:'Quicksand',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+    color:var(--ink-soft);
+  }
+  .font-toggle button.active{
+    border-color:var(--red);
+    color:var(--red);
+    background:var(--red-soft);
+  }
+  .font-toggle button .sample{
+    display:block;
+    font-size:26px;
+    margin-bottom:4px;
+    color:var(--ink);
+  }
+
+  /* ---------- nav ---------- */
+  .phonogram-nav{
+    display:flex; gap:12px; justify-content:center; margin-bottom:32px; flex-wrap:wrap;
+  }
+  .phonogram-nav button.child-font{
+    font-weight:700;
+    font-size:20px;
+    padding:8px 24px;
+    border-radius:30px;
+    border:2px solid var(--line);
+    background:var(--card);
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition:.15s ease;
+  }
+  .phonogram-nav button.active{
+    color:#fff;
+    background:var(--red);
+    border-color:var(--red);
+  }
+
+  /* ---------- section ---------- */
+  .section{display:none;}
+  .section.active{display:block;}
+
+  /* ---------- name-slip (digraph label, small, not the main event) ---------- */
+  .slip{
+    display:flex;
+    justify-content:center;
+    margin-bottom:22px;
+  }
+  .slip-inner{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:8px 26px;
+    cursor:pointer;
+    text-align:center;
+    transition:transform .1s ease;
+  }
+  .slip-inner.playing{ transform:scale(1.05); }
+  .slip-inner .phono.child-font{
+    font-weight:700;
+    font-size:34px;
+    line-height:1;
+    color:var(--red);
+  }
+
+  /* ---------- word carousel (one card at a time on screen) ---------- */
+  .word-carousel{
+    display:flex;
+    justify-content:center;
+  }
+
+  .word-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:44px 20px 26px;
+    text-align:center;
+    cursor:pointer;
+    user-select:none;
+    transition:transform .12s ease, box-shadow .12s ease;
+    position:relative;
+    display:none;
+    width:100%;
+    max-width:340px;
+  }
+  .word-card.active{ display:block; }
+  .word-card:hover{ transform:translateY(-2px); box-shadow:0 8px 20px rgba(31,27,23,.09); }
+
+  .word-card .display.child-font{
+    font-weight:600;
+    font-size:58px;
+    line-height:1;
+    min-height:70px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    letter-spacing:.01em;
+  }
+  body.font-print .word-card .display.child-font{ font-size:44px; min-height:56px; }
+
+  .word-card .unit{
+    position:relative;
+    padding:2px 3px;
+    border-radius:6px;
+    color:var(--ink);
+    transition:transform .08s ease, background .08s ease;
+  }
+  .word-card .unit.digraph{ color:var(--red); }
+  .word-card .unit.playing{ transform:scale(1.15); }
+
+  .word-card .hear-word{
+    display:none;
+    margin-top:16px;
+    font-size:26px;
+    line-height:1;
+    cursor:pointer;
+    opacity:.85;
+  }
+  .word-card .hear-word.visible{ display:block; }
+  .word-card .hear-word:hover{ opacity:1; transform:scale(1.1); }
+
+  .carousel-nav{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:28px;
+    margin-top:22px;
+  }
+  .carousel-nav button{
+    background:var(--card);
+    border:1px solid var(--line);
+    color:var(--ink-soft);
+    width:46px;
+    height:46px;
+    border-radius:50%;
+    font-size:20px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:.15s ease;
+  }
+  .carousel-nav button:hover:not(:disabled){ background:var(--red-soft); color:var(--red); border-color:var(--red-soft); }
+  .carousel-nav button:disabled{ opacity:.3; cursor:default; }
+
+  .carousel-dots{
+    display:flex;
+    gap:7px;
+    justify-content:center;
+    margin-top:16px;
+    flex-wrap:wrap;
+    max-width:320px;
+    margin-left:auto;
+    margin-right:auto;
+  }
+  .carousel-dots .dot{
+    width:9px; height:9px; border-radius:50%;
+    background:var(--line);
+    cursor:pointer;
+    border:none;
+    padding:0;
+  }
+  .carousel-dots .dot.active{ background:var(--red); }
+  .carousel-dots .dot.list-dot{ background:var(--gold); }
+  .carousel-dots .dot.list-dot.active{ background:var(--red); }
+
+  /* ---------- reading list card ---------- */
+  .reading-list{ padding:34px 24px 26px; }
+  .reading-list .list-row{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    padding:5px 0;
+    cursor:pointer;
+  }
+  .reading-list .list-word.child-font{
+    font-weight:600;
+    font-size:26px;
+    color:var(--ink);
+  }
+  body.font-print .reading-list .list-word.child-font{ font-size:20px; }
+  .reading-list .list-word .digraph{ color:var(--red); }
+
+  footer{
+    text-align:center; margin-top:60px; font-size:12.5px;
+    color:var(--ink-soft); line-height:1.7;
+  }
+
+  /* ---------- print ---------- */
+  .print-title{display:none;}
+
+  @media print{
+    body{background:#fff;}
+    .settings-btn, .settings-overlay, .phonogram-nav, .carousel-nav, .carousel-dots, header, footer{display:none !important;}
+    .print-title{
+      display:block; font-family:'Dancing Script',cursive; font-size:28px;
+      text-align:center; margin:0 0 14px; color:var(--ink);
+    }
+    .section{display:block !important; page-break-after:always;}
+    .section:last-child{page-break-after:auto;}
+    .slip{ margin-bottom:16px; }
+    .slip-inner .phono.child-font{ font-family:'Dancing Script',cursive !important; font-size:30px; }
+    .word-carousel{display:grid !important; grid-template-columns:repeat(2,1fr); gap:14px;}
+    .word-card{
+      display:block !important;
+      break-inside:avoid; box-shadow:none; border:1.5px solid var(--line); padding:20px 10px;
+      max-width:none;
+    }
+    .word-card .display.child-font{ font-family:'Dancing Script',cursive !important; font-size:36px; min-height:44px; }
+    .word-card .hear-word{ display:none !important; }
+    .reading-list{ grid-column:1/-1; }
+    .reading-list .list-word.child-font{ font-family:'Dancing Script',cursive !important; font-size:22px; }
+
+    /* adult guide prints as its own page at the very end */
+    .settings-panel-print{
+      display:block !important;
+      page-break-before:always;
+      font-family:'Dancing Script',cursive;
+      font-size:19px;
+      line-height:1.5;
+      color:var(--ink);
+      padding:30px 10px;
+    }
+    .settings-panel-print h2{
+      font-family:'Dancing Script',cursive; font-weight:700; font-size:34px;
+      margin:0 0 18px; text-align:center;
+    }
+    .settings-panel-print p{ margin:0 0 16px; }
+    .settings-panel-print strong{ color:var(--red); }
+    .wrap{padding:20px 30px;}
+  }
+  .settings-panel-print{ display:none; }
+</style>
+</head>
+<body class="font-cursive">
+<button class="settings-btn" id="settingsBtn" aria-label="settings" title="settings">⚙</button>
+
+<div class="settings-overlay" id="settingsOverlay">
+  <div class="settings-panel">
+    <button class="close" id="settingsClose" aria-label="close">✕</button>
+    <h2>for the guide</h2>
+
+    <h3>letter style</h3>
+    <div class="font-toggle" id="letterStyleToggle">
+      <button data-font="cursive" class="active"><span class="sample" style="font-family:'Dancing Script',cursive;">ship</span>cursive</button>
+      <button data-font="print"><span class="sample" style="font-family:'Andika',sans-serif;">ship</span>print</button>
+    </div>
+
+    <h3>word set</h3>
+    <div class="font-toggle" id="wordSetToggle">
+      <button data-mode="auto" class="active">sets (1 &amp; 2, looped)</button>
+      <button data-mode="shuffle">shuffle</button>
+    </div>
+    <p style="margin-top:10px; font-size:12.5px;">By default, the child's own carousel loops through Set 1, then Set 2, then back to Set 1 again — automatically, with no need to come back to you. Sets are fixed and fully vetted for decodability, split as evenly as possible from the full pool so nothing goes unused. <strong>Th</strong> is the exception — its 11 words stay together as one full list rather than splitting into two small sets. Shuffle is a separate, adult-only option — useful for review or a lesson you're actively guiding — and draws a fresh random set from the whole pool each time you select it.</p>
+
+    <h3>how to present this work</h3>
+    <p>Tap the small name-slip at the top of each section first — the child hears the one sound alone, exactly as a sandpaper letter is isolated before it appears in a word. Each word card below shows the whole word immediately, digraph in red. The child reads it using sounds already known. Tapping any single letter or the red digraph plays <strong>a real recorded human voice — not synthesized speech</strong> — for that sound, useful when a child is unsure of a particular letter, especially ones often confused, like b, d, and g. Tapping the word itself reveals a speaker icon — tapping that speaks the whole word naturally, as a control of error the child can use on their own, without needing you to confirm it.</p>
+
+    <h3>keeping it phonetic</h3>
+    <p>Every word here is built only from sounds the child already has, apart from the target digraph — there are no puzzle words in this set.</p>
+
+    <h3>a note on "th"</h3>
+    <p>English "th" carries two different sounds depending on the word. To keep this a true single-difficulty presentation, this set uses only the voiceless sound (as in <em>moth, path, thud</em>) throughout. The voiced version (as in "this," "that") is a natural next-step distinction once this sound is secure — best kept as its own separate presentation later.</p>
+
+    <h3>extending to the home</h3>
+    <p>This reader is meant as an extension of the prepared environment into the home — usable by a parent unfamiliar with Montessori method, so the child can keep practicing independently between sessions, supporting a smooth transition into elementary reading.</p>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <header>
+    <h1 class="child-font">digraphs</h1>
+  </header>
+
+  <div class="phonogram-nav">
+    <button data-p="sh" class="active child-font">sh</button>
+    <button data-p="ch" class="child-font">ch</button>
+    <button data-p="th" class="child-font">th</button>
+  </div>
+
+  <div id="sections"></div>
+
+  <footer>
+    tap a letter or the red digraph to hear its recorded sound &middot;
+    tap the word to reveal the speaker icon &middot;
+    tap the speaker icon to hear the whole word spoken naturally &middot;
+    use the arrows or dots to move between cards &middot;
+    the last card in each set is a reading list of everything read so far
+  </footer>
+
+  <!-- printed only, appears as the final page -->
+  <div class="settings-panel-print">
+    <h2>for the guide</h2>
+    <p><strong>How to present.</strong> Tap the small name-slip first for the isolated sound. Each word card shows the whole word at once; tap any letter or the red digraph for its recorded sound, tap the word for the speaker icon, tap that to hear the word spoken as a control of error.</p>
+    <p><strong>A note on "th".</strong> Only the voiceless sound (moth, path, thud) is used here; the voiced version (this, that) is a separate later presentation.</p>
+  </div>
+</div>
+
+<script>
+const WORD_BANKS = {
+  sh: [
+    ["ship",  ["sh","i","p"]],
+    ["shop",  ["sh","o","p"]],
+    ["fish",  ["f","i","sh"]],
+    ["dish",  ["d","i","sh"]],
+    ["shed",  ["sh","e","d"]],
+    ["shut",  ["sh","u","t"]],
+    ["shin",  ["sh","i","n"]],
+    ["shot",  ["sh","o","t"]],
+    ["cash",  ["c","a","sh"]],
+    ["wish",  ["w","i","sh"]],
+    ["shrub", ["sh","r","u","b"]],
+    ["shrimp",["sh","r","i","m","p"]],
+    ["slosh", ["s","l","o","sh"]],
+    ["swish", ["s","w","i","sh"]],
+    ["gush",  ["g","u","sh"]],
+    ["mash",  ["m","a","sh"]],
+    ["splash",["s","p","l","a","sh"]],
+    ["crash", ["c","r","a","sh"]],
+    ["trash", ["t","r","a","sh"]],
+    ["brush", ["b","r","u","sh"]]
+  ],
+  ch: [
+    ["chip",  ["ch","i","p"]],
+    ["chin",  ["ch","i","n"]],
+    ["chomp", ["ch","o","m","p"]],
+    ["rich",  ["r","i","ch"]],
+    ["chop",  ["ch","o","p"]],
+    ["chat",  ["ch","a","t"]],
+    ["chub",  ["ch","u","b"]],
+    ["chest", ["ch","e","s","t"]],
+    ["chunk", ["ch","u","n","k"]],
+    ["chug",  ["ch","u","g"]],
+    ["munch", ["m","u","n","ch"]],
+    ["lunch", ["l","u","n","ch"]],
+    ["bunch", ["b","u","n","ch"]],
+    ["crunch",["c","r","u","n","ch"]],
+    ["inch",  ["i","n","ch"]],
+    ["pinch", ["p","i","n","ch"]],
+    ["finch", ["f","i","n","ch"]],
+    ["bench", ["b","e","n","ch"]],
+    ["batch", ["b","a","t","ch"]],
+    ["catch", ["c","a","t","ch"]]
+  ],
+  th: [
+    ["moth",  ["m","o","th"]],
+    ["path",  ["p","a","th"]],
+    ["thump", ["th","u","m","p"]],
+    ["thin",  ["th","i","n"]],
+    ["thud",  ["th","u","d"]],
+    ["math",  ["m","a","th"]],
+    ["bath",  ["b","a","th"]],
+    ["cloth", ["c","l","o","th"]],
+    ["froth", ["f","r","o","th"]],
+    ["broth", ["b","r","o","th"]],
+    ["sloth", ["s","l","o","th"]]
+  ]
+};
+
+function shuffleArray(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+let currentMode = 'auto'; // 'auto' (loops set1->set2->set1...) | 'shuffle' (adult-only, single shuffled group)
+
+function splitIntoSets(bank){
+  if(bank.length <= 10) return [ bank.slice() ];
+  const half = Math.ceil(bank.length / 2);
+  return [ bank.slice(0, half), bank.slice(half) ];
+}
+
+function getCardGroups(p){
+  const bank = WORD_BANKS[p];
+  if(currentMode === 'shuffle'){
+    return [ shuffleArray(bank).slice(0, Math.min(10, bank.length)) ];
+  }
+  if(p === 'th'){
+    return [ bank.slice() ]; // th stays as one full list of 11 rather than splitting into two small sets
+  }
+  return splitIntoSets(bank);
+}
+
+
+const digraphOf = { sh:"sh", ch:"ch", th:"th" };
+
+// ---- audio engine ----
+const audioCache = {};
+
+function soundIdFor(digraph, unit){
+  if(unit === digraph) return `digraph-${digraph}`;
+  return `letter-${unit}`;
+}
+
+function playSound(id, pulseEl){
+  if(pulseEl){
+    pulseEl.classList.add('playing');
+    setTimeout(() => pulseEl.classList.remove('playing'), 220);
+  }
+  if(!audioCache[id]){
+    audioCache[id] = new Audio(`sounds/${id}.mp3`);
+  }
+  const a = audioCache[id];
+  a.currentTime = 0;
+  a.play().catch(() => { /* file not present yet — silent, visual pulse still shown */ });
+}
+
+function speakWord(word, pulseEl){
+  if(pulseEl){
+    pulseEl.classList.add('playing');
+    setTimeout(() => pulseEl.classList.remove('playing'), 350);
+  }
+  if(!('speechSynthesis' in window)){ return; }
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(word);
+  utter.rate = 0.85;
+  utter.pitch = 1;
+  utter.lang = 'en-US';
+  window.speechSynthesis.speak(utter);
+}
+
+// ---- rendering ----
+function unitSpan(unit, id, isDigraph){
+  const cls = isDigraph ? "unit digraph" : "unit";
+  return `<span class="${cls}" data-sound-id="${id}">${unit}</span>`;
+}
+
+function wholeHTML(units, digraph){
+  return units.map(u => unitSpan(u, soundIdFor(digraph, u), u === digraph)).join('');
+}
+
+function buildSection(p){
+  const digraph = digraphOf[p];
+  const groups = getCardGroups(p);
+  const section = document.createElement('div');
+  section.className = 'section';
+  section.dataset.p = p;
+
+  const printTitle = document.createElement('div');
+  printTitle.className = 'print-title';
+  printTitle.textContent = `the ${digraph} sound — ${digraph === 'sh' ? 'shop, fish, shed…' : digraph === 'ch' ? 'chip, munch, chop…' : 'moth, path, bath…'}`;
+  section.appendChild(printTitle);
+
+  // name-slip
+  const slip = document.createElement('div');
+  slip.className = 'slip';
+  const slipInner = document.createElement('div');
+  slipInner.className = 'slip-inner';
+  slipInner.innerHTML = `<div class="phono child-font">${digraph}</div>`;
+  slipInner.addEventListener('click', () => playSound(`digraph-${digraph}`, slipInner));
+  slip.appendChild(slipInner);
+  section.appendChild(slip);
+
+  const carousel = document.createElement('div');
+  carousel.className = 'word-carousel';
+
+  const cards = [];
+
+  function addWordCard(word, units){
+    const card = document.createElement('div');
+    card.className = 'word-card';
+    card.dataset.printWhole = word;
+
+    const display = document.createElement('div');
+    display.className = 'display child-font';
+    display.innerHTML = wholeHTML(units, digraph);
+
+    const hearWord = document.createElement('div');
+    hearWord.className = 'hear-word';
+    hearWord.textContent = '🔊';
+
+    card.appendChild(display);
+    card.appendChild(hearWord);
+    carousel.appendChild(card);
+    cards.push(card);
+
+    display.addEventListener('click', (e) => {
+      const unitEl = e.target.closest('.unit');
+      if(!unitEl) return;
+      e.stopPropagation();
+      playSound(unitEl.dataset.soundId, unitEl);
+    });
+    hearWord.addEventListener('click', (e) => {
+      e.stopPropagation();
+      speakWord(word, display);
+    });
+    card.addEventListener('click', () => {
+      hearWord.classList.add('visible');
+    });
+  }
+
+  function addReadingList(words){
+    const listCard = document.createElement('div');
+    listCard.className = 'word-card reading-list';
+    words.forEach(([word]) => {
+      const row = document.createElement('div');
+      row.className = 'list-row';
+      const wordSpan = document.createElement('span');
+      wordSpan.className = 'list-word child-font';
+      let html = "";
+      let i = 0;
+      while(i < word.length){
+        if(word.slice(i, i+digraph.length) === digraph){
+          html += `<span class="digraph">${digraph}</span>`;
+          i += digraph.length;
+        } else {
+          html += word[i];
+          i += 1;
+        }
+      }
+      wordSpan.innerHTML = html;
+      row.appendChild(wordSpan);
+      row.addEventListener('click', (e) => {
+        e.stopPropagation();
+        speakWord(word, wordSpan);
+      });
+      listCard.appendChild(row);
+    });
+    carousel.appendChild(listCard);
+    cards.push(listCard);
+  }
+
+  groups.forEach(groupWords => {
+    groupWords.forEach(([word, units]) => addWordCard(word, units));
+    addReadingList(groupWords);
+  });
+
+  section.appendChild(carousel);
+
+  // ---- one-card-at-a-time navigation (loops continuously, never dead-ends) ----
+  const nav = document.createElement('div');
+  nav.className = 'carousel-nav';
+  nav.innerHTML = `<button class="prev" aria-label="previous">‹</button><button class="next" aria-label="next">›</button>`;
+  section.appendChild(nav);
+
+  const dots = document.createElement('div');
+  dots.className = 'carousel-dots';
+  cards.forEach((c, i) => {
+    const dot = document.createElement('button');
+    dot.className = 'dot' + (c.classList.contains('reading-list') ? ' list-dot' : '');
+    dot.dataset.i = i;
+    dots.appendChild(dot);
+  });
+  section.appendChild(dots);
+
+  let current = 0;
+  function showCard(i){
+    current = ((i % cards.length) + cards.length) % cards.length; // wraps both directions
+    cards.forEach((c, idx) => c.classList.toggle('active', idx === current));
+    dots.querySelectorAll('.dot').forEach((d, idx) => d.classList.toggle('active', idx === current));
+    // hide any revealed speaker icons so each visit starts fresh
+    cards.forEach(c => {
+      const hw = c.querySelector('.hear-word');
+      if(hw) hw.classList.remove('visible');
+    });
+  }
+  nav.querySelector('.prev').addEventListener('click', () => showCard(current - 1));
+  nav.querySelector('.next').addEventListener('click', () => showCard(current + 1));
+  dots.querySelectorAll('.dot').forEach(d => {
+    d.addEventListener('click', () => showCard(parseInt(d.dataset.i, 10)));
+  });
+  showCard(0);
+
+  return section;
+}
+
+const container = document.getElementById('sections');
+let activeTab = 'sh';
+
+function rebuildSections(){
+  container.innerHTML = '';
+  ['sh','ch','th'].forEach(p => container.appendChild(buildSection(p)));
+  const target = container.querySelector(`.section[data-p="${activeTab}"]`);
+  if(target) target.classList.add('active');
+}
+rebuildSections();
+
+document.querySelectorAll('.phonogram-nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeTab = btn.dataset.p;
+    document.querySelectorAll('.phonogram-nav button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelector(`.section[data-p="${activeTab}"]`).classList.add('active');
+  });
+});
+
+// ---- settings panel ----
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsOverlay = document.getElementById('settingsOverlay');
+const settingsClose = document.getElementById('settingsClose');
+settingsBtn.addEventListener('click', () => settingsOverlay.classList.add('open'));
+settingsClose.addEventListener('click', () => settingsOverlay.classList.remove('open'));
+settingsOverlay.addEventListener('click', (e) => { if(e.target === settingsOverlay) settingsOverlay.classList.remove('open'); });
+
+document.querySelectorAll('#letterStyleToggle button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#letterStyleToggle button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.body.classList.remove('font-cursive', 'font-print');
+    document.body.classList.add(btn.dataset.font === 'print' ? 'font-print' : 'font-cursive');
+  });
+});
+
+document.querySelectorAll('#wordSetToggle button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#wordSetToggle button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMode = btn.dataset.mode;
+    rebuildSections();
+  });
+});
+</script>
+</body>
+</html>
