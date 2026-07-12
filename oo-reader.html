@@ -61,6 +61,7 @@
   }
   .phonogram-nav button.active{ color:#fff; background:var(--red); border-color:var(--red); }
   .phonogram-nav button.pool-long{ text-decoration:underline; text-underline-offset:4px; }
+  .phonogram-nav button.pool-combined::after{ content:''; display:block; width:6px; height:6px; border-radius:50%; background:var(--gold); margin:5px auto 0; }
 
   .section{ display:none; }
   .section.active{ display:block; }
@@ -70,6 +71,7 @@
   .slip-inner.playing{ transform:scale(1.05); }
   .slip-inner .phono.child-font{ font-weight:700; font-size:34px; line-height:1; color:var(--red); }
   .slip-inner .phono.pool-long{ text-decoration:underline; text-underline-offset:5px; }
+  .slip-inner .phono.pool-combined::after{ content:''; display:block; width:6px; height:6px; border-radius:50%; background:var(--gold); margin:6px auto 0; }
 
   .word-carousel{ display:flex; justify-content:center; }
   .word-card{
@@ -143,20 +145,6 @@
 </style>
 </head>
 <body class="font-cursive">
-<style>
-.tps-nav{position:fixed;top:0;left:0;right:0;z-index:999;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;background:rgba(251,247,239,0.97);backdrop-filter:blur(10px);border-bottom:1px solid rgba(231,223,209,0.8);}
-.tps-nav-brand{font-size:0.9rem;font-weight:600;color:#27500A;text-decoration:none;display:flex;align-items:center;gap:7px;}
-.tps-nav-brand svg{width:16px;height:16px;flex-shrink:0;}
-.tps-nav-back{font-size:0.85rem;color:#7A7166;text-decoration:none;font-weight:500;transition:color .2s;}
-.tps-nav-back:hover{color:#27500A;}
-</style>
-<nav class="tps-nav" aria-label="site navigation">
-  <a href="https://thepreparedspace.github.io" class="tps-nav-brand">
-    <svg viewBox="0 0 36 26" aria-hidden="true"><ellipse cx="18" cy="19" rx="13" ry="7" fill="#5A8C3C"/><circle cx="9" cy="9" r="6" fill="#5A8C3C"/><circle cx="21" cy="7" r="6.5" fill="#5A8C3C"/></svg>
-    The Prepared Space
-  </a>
-  <a href="https://thepreparedspace.github.io" class="tps-nav-back">← back to home</a>
-</nav>
 <button class="settings-btn" id="settingsBtn" aria-label="settings" title="settings">⚙</button>
 
 <div class="settings-overlay" id="settingsOverlay">
@@ -173,10 +161,24 @@
     <h3>which "oo" sound</h3>
     <div class="toggle-row" id="poolToggle">
       <button data-mode="long">long oo (zoo)</button>
-      <button data-mode="short">short oo (look)</button>
-      <button data-mode="both" class="active">both</button>
+      <button data-mode="short" class="active">short oo (look)</button>
+      <button data-mode="both">both</button>
     </div>
     <p style="margin-top:10px; font-size:12.5px;">"oo" makes two unrelated sounds in English, and the spelling gives no clue which one applies — the child has to simply know the word. Choose which sound family the child works with right now. In <strong>both</strong> mode, the long-oo sound is shown underlined everywhere it appears (the tab, the name-slip, and every word), so it's visually distinct from the short-oo sound without needing any extra words on screen.</p>
+
+    <h3>combined words — long oo</h3>
+    <div class="toggle-row" id="longCombinedToggle">
+      <button data-on="off" class="active">off</button>
+      <button data-on="on">on</button>
+    </div>
+    <p style="margin-top:10px; font-size:12.5px;">Adds a further set of 8 words that combine long "oo" with a digraph the child has already learned elsewhere (sh, ch, or th) — e.g. <em>toothbrush, mushroom, swoosh</em>. Only shown when long oo is included above. Isolation of difficulty is kept intact: this stays a completely separate set from the plain long-oo words, never mixed in with them.</p>
+
+    <h3>combined words — short oo</h3>
+    <div class="toggle-row" id="shortCombinedToggle">
+      <button data-on="off" class="active">off</button>
+      <button data-on="on">on</button>
+    </div>
+    <p style="margin-top:10px; font-size:12.5px;">Honestly, there's only <strong>one</strong> clean word in English that combines short oo with a known digraph — <em>shook</em>. Turning this on shows the child exactly that: a genuine, very short list, rather than pretending there's more here than there is. Only shown when short oo is included above.</p>
 
     <h3>how to present this work</h3>
     <p>Tap the small name-slip at the top of each section first — the child hears the one sound alone. Each word card below shows the whole word immediately, "oo" in red (underlined for the long sound). Tapping any single letter or the red "oo" plays <strong>a real recorded human voice — not synthesized speech</strong> — for that sound. Tapping the word itself reveals a speaker icon — tapping that speaks the whole word naturally, as a control of error the child can use on their own.</p>
@@ -245,21 +247,47 @@ const WORD_BANKS = {
     ["wood",  ["w","oo","d"]],
     ["wool",  ["w","oo","l"]],
     ["hood",  ["h","oo","d"]]
+  ],
+  longCombined: [
+    ["smooth",    ["s","m",{t:"oo",long:true},{t:"th"}]],
+    ["booth",     ["b",{t:"oo",long:true},{t:"th"}]],
+    ["bathroom",  ["b","a",{t:"th"},"r",{t:"oo",long:true},"m"]],
+    ["toothbrush",["t",{t:"oo",long:true},{t:"th"},"b","r","u",{t:"sh"}]],
+    ["mushroom",  ["m","u",{t:"sh"},"r",{t:"oo",long:true},"m"]],
+    ["shoot",     [{t:"sh"},{t:"oo",long:true},"t"]],
+    ["pooch",     ["p",{t:"oo",long:true},{t:"ch"}]],
+    ["swoosh",    ["s","w",{t:"oo",long:true},{t:"sh"}]]
+  ],
+  shortCombined: [
+    ["shook", [{t:"sh"},{t:"oo",long:false},"k"]]
   ]
 };
 
 const POOL_INFO = {
-  long:  { label: "oo", soundId: "oo-long",  underline: true  },
-  short: { label: "oo", soundId: "oo-short", underline: false }
+  long:          { label: "oo", soundId: "oo-long",  underline: true,  combined: false },
+  short:         { label: "oo", soundId: "oo-short", underline: false, combined: false },
+  longCombined:  { label: "oo", soundId: "oo-long",  underline: true,  combined: true  },
+  shortCombined: { label: "oo", soundId: "oo-short", underline: false, combined: true  }
 };
 
-let poolMode = 'both'; // 'long' | 'short' | 'both'
+let poolMode = 'short'; // 'long' | 'short' | 'both'
+let includeLongCombined = false;
+let includeShortCombined = false;
 let activeTab = 'short';
 
 function enabledPools(){
-  if(poolMode === 'long') return ['long'];
-  if(poolMode === 'short') return ['short'];
-  return ['short','long'];
+  let base;
+  if(poolMode === 'long') base = ['long'];
+  else if(poolMode === 'short') base = ['short'];
+  else base = ['short','long'];
+
+  const result = [];
+  base.forEach(p => {
+    result.push(p);
+    if(p === 'long' && includeLongCombined) result.push('longCombined');
+    if(p === 'short' && includeShortCombined) result.push('shortCombined');
+  });
+  return result;
 }
 
 // ---- audio engine ----
@@ -280,14 +308,25 @@ function speakWord(word, pulseEl){
   window.speechSynthesis.speak(utter);
 }
 
-function unitSpan(unit, id, isDigraph, underline){
-  let cls = isDigraph ? "unit digraph" : "unit";
-  if(isDigraph && underline) cls += " pool-long";
-  return `<span class="${cls}" data-sound-id="${id}">${unit}</span>`;
+function unitSpan(displayText, soundId, isSpecial, underline){
+  let cls = isSpecial ? "unit digraph" : "unit";
+  if(isSpecial && underline) cls += " pool-long";
+  return `<span class="${cls}" data-sound-id="${soundId}">${displayText}</span>`;
 }
+// handles three unit shapes: plain letter string, bare "oo" string (uses the pool's own sound), or a typed object {t:'sh'|'ch'|'th'|'oo', long?:bool}
 function wholeHTML(units, poolKey){
   const info = POOL_INFO[poolKey];
-  return units.map(u => unitSpan(u, u === "oo" ? info.soundId : `letter-${u}`, u === "oo", info.underline)).join('');
+  return units.map(u => {
+    if(typeof u === 'string'){
+      if(u === 'oo') return unitSpan('oo', info.soundId, true, info.underline);
+      return unitSpan(u, `letter-${u}`, false, false);
+    }
+    if(u.t === 'oo'){
+      const soundId = u.long ? 'oo-long' : 'oo-short';
+      return unitSpan('oo', soundId, true, u.long);
+    }
+    return unitSpan(u.t, `digraph-${u.t}`, true, false);
+  }).join('');
 }
 
 function splitIntoSets(bank){
@@ -305,14 +344,20 @@ function buildSection(poolKey){
 
   const printTitle = document.createElement('div');
   printTitle.className = 'print-title';
-  printTitle.textContent = poolKey === 'long' ? 'the long "oo" sound — zoo, boot, moon…' : 'the short "oo" sound — look, book, wood…';
+  const titles = {
+    long: 'the long "oo" sound — zoo, boot, moon…',
+    short: 'the short "oo" sound — look, book, wood…',
+    longCombined: 'long "oo" combined — bathroom, mushroom, shoot…',
+    shortCombined: 'short "oo" combined — shook'
+  };
+  printTitle.textContent = titles[poolKey];
   section.appendChild(printTitle);
 
   const slip = document.createElement('div');
   slip.className = 'slip';
   const slipInner = document.createElement('div');
   slipInner.className = 'slip-inner';
-  slipInner.innerHTML = `<div class="phono child-font${info.underline ? ' pool-long' : ''}">${info.label}</div>`;
+  slipInner.innerHTML = `<div class="phono child-font${info.underline ? ' pool-long' : ''}${info.combined ? ' pool-combined' : ''}">${info.label}</div>`;
   slipInner.addEventListener('click', () => playSound(info.soundId, slipInner));
   slip.appendChild(slipInner);
   section.appendChild(slip);
@@ -355,23 +400,12 @@ function buildSection(poolKey){
   function addReadingList(groupWords){
     const listCard = document.createElement('div');
     listCard.className = 'word-card reading-list';
-    groupWords.forEach(([word]) => {
+    groupWords.forEach(([word, units]) => {
       const row = document.createElement('div');
       row.className = 'list-row';
       const wordSpan = document.createElement('span');
       wordSpan.className = 'list-word child-font';
-      let html = "";
-      let i = 0;
-      while(i < word.length){
-        if(word.slice(i, i+2) === "oo"){
-          html += `<span class="digraph${info.underline ? ' pool-long' : ''}">oo</span>`;
-          i += 2;
-        } else {
-          html += word[i];
-          i += 1;
-        }
-      }
-      wordSpan.innerHTML = html;
+      wordSpan.innerHTML = wholeHTML(units, poolKey);
       row.appendChild(wordSpan);
       row.addEventListener('click', (e) => { e.stopPropagation(); speakWord(word, wordSpan); });
       listCard.appendChild(row);
@@ -427,7 +461,7 @@ function rebuildAll(){
   navContainer.innerHTML = '';
   pools.forEach(poolKey => {
     const btn = document.createElement('button');
-    btn.className = 'child-font' + (poolKey === activeTab ? ' active' : '') + (POOL_INFO[poolKey].underline ? ' pool-long' : '');
+    btn.className = 'child-font' + (poolKey === activeTab ? ' active' : '') + (POOL_INFO[poolKey].underline ? ' pool-long' : '') + (POOL_INFO[poolKey].combined ? ' pool-combined' : '');
     btn.dataset.p = poolKey;
     btn.textContent = POOL_INFO[poolKey].label;
     btn.addEventListener('click', () => {
@@ -469,6 +503,24 @@ document.querySelectorAll('#poolToggle button').forEach(btn => {
     document.querySelectorAll('#poolToggle button').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     poolMode = btn.dataset.mode;
+    rebuildAll();
+  });
+});
+
+document.querySelectorAll('#longCombinedToggle button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#longCombinedToggle button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    includeLongCombined = btn.dataset.on === 'on';
+    rebuildAll();
+  });
+});
+
+document.querySelectorAll('#shortCombinedToggle button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#shortCombinedToggle button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    includeShortCombined = btn.dataset.on === 'on';
     rebuildAll();
   });
 });
